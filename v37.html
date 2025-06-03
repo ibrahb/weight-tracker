@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weight Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ... your styles unchanged ... */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9fb;
+      color: #333;
+    }
+
+    header {
+      background-color: crimson;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      background: #eee;
+    }
+
+    .tab-button {
+      padding: 1rem;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-size: 1rem;
+    }
+
+    .tab-button.active {
+      background: crimson;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 20px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .controls input, .controls button {
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .controls input {
+      width: 150px;
+      margin-right: 10px;
+    }
+
+    .controls input[type="date"] {
+      width: 180px;
+    }
+
+    .controls button {
+      background-color: crimson;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #e0e6ed;
+    }
+
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .pagination {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .pagination button {
+      padding: 8px 16px;
+      margin: 0 5px;
+      background-color: crimson;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    canvas {
+      width: 100% !important;
+      max-height: 300px;
+    }
+  </style>
+</head>
+<body>
+  <header>Weight Tracker</header>
+  <div class="tabs">
+    <button class="tab-button active" onclick="switchTab('tracker', event)">Tracker</button>
+    <button class="tab-button" onclick="switchTab('about', event)">About</button>
+  </div>
+
+  <div id="tracker" class="tab-content active">
+    <div class="container">
+      <div class="card controls">
+        <input type="date" id="dateInput" />
+        <input type="text" id="weightInput" placeholder="Enter weight or N/A" />
+        <button onclick="addWeight()">Add Weight</button>
+        <button onclick="clearAllData()">Clear All Data</button>
+        <button onclick="exportCSV()">Export CSV</button>
+      </div>
+
+      <div class="card">
+        <h3>Daily Weights</h3>
+        <table id="weightTable">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Weight</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="pagination">
+          <button onclick="prevPage()">Previous</button>
+          <span id="pageInfo"></span>
+          <button onclick="nextPage()">Next</button>
+        </div>
+      </div>
+
+      <div class="grid-layout">
+        <div class="card">
+          <h3>Weekly Averages</h3>
+          <table id="weeklyAvgTable">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Avg Weight</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3>Weekly Weight Chart</h3>
+          <canvas id="weeklyChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="about" class="tab-content">
+    <div class="container">
+      <div class="card">
+        <h2>About</h2>
+        <p>Hi, I’m Ibraheem! 👋</p>
+        <p>I originally created this app to help track weight because I found existing apps either too difficult to use or too expensive. This app is completely free to use because I believe health tools that promote personal growth should be accessible to everyone. 📈</p>
+        <p>It’s simple, easy to use, and private. There are no annoying ads and no need to create an account. Your data is stored locally on your device, so you can access it anytime without worry, but keep in mind it’s not cross-platform yet (to come soon!). 💻</p>
+        <p>Feel free to share this app with your friends, family, and anyone who might benefit. It’s for everyone! Enjoy, and good luck on your fitness journey! 🏋🏽</p>
+        <h3>How to Use the App:</h3>
+        <ul>
+          <li>I recommend choosing a consistent time of day to measure your weight. Weight naturally fluctuates daily due to factors like hydration and food intake. 🍔</li>
+          <li>Personally, I weigh myself in the morning, after using the bathroom but before eating breakfast, but feel free to pick what works best for you. 🕒</li>
+          <li>Use a scale to measure your weight in any unit of measurement, then enter your weight into the app. ⏲️ </li>
+          <li>If you miss a day (no pressure! we all have off days!), just enter "N/A." That day won't be included in the weekly average, but will be tracked to hold yourself accountable (super important in your journey). 💤 </li>
+          <li>You can edit or delete entries at any time. 📝 </li>
+          <li>This app provides visual metrics to track your progress. Since daily weight can vary for many reasons, it calculates a weekly average, which gives a much more reliable picture of your progress. You can also view a graph of your weekly average over time to see how you're doing. 📊</li>
+          <li>If you want to export your data, you can download it as a CSV file. ⚙️</li>
+        </ul>
+        <h3>Final Note</h3>
+        <p>Remember: plateaus are normal and part of the process. Stay patient, adjust your plan when needed, and keep moving forward. Your breakthrough will come! 💪🏻💥</p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <h4>Updates to Come</h4>
+        <ul>
+            <li>Relevant/New Research Tab</li>
+            <li>Cross-platform Access</li>
+            <li>Calorie Tracker</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let weights = JSON.parse(localStorage.getItem("weights")) || [];
+    let currentPage = 1;
+    const rowsPerPage = 7;
+    let chart; // To store chart instance
+
+    function formatDate(dateString) {
+      const [year, month, day] = dateString.split("-");
+      const localDate = new Date(year, month - 1, day);
+      return localDate.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function switchTab(tab, event) {
+      document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+      event.target.classList.add("active");
+      document.querySelectorAll(".tab-content").forEach(content => content.classList.remove("active"));
+      document.getElementById(tab).classList.add("active");
+    }
+
+    function addWeight() {
+      const weightInput = document.getElementById("weightInput");
+      const dateInput = document.getElementById("dateInput");
+      let weight = weightInput.value.trim();
+      const dateValue = dateInput.value;
+
+      if (!dateValue) return alert("Please select a date.");
+      if (!weight) return alert("Please enter a weight or 'N/A'.");
+
+      if (weight.toLowerCase() !== "n/a") {
+        if (isNaN(weight)) return alert("Please enter a valid number or 'N/A'.");
+        weight = Number(weight);
+      } else {
+        weight = "N/A";
+      }
+
+      const existingIndex = weights.findIndex(w => w.date === dateValue);
+      if (existingIndex !== -1) {
+        weights[existingIndex].weight = weight;
+      } else {
+        weights.push({ weight, date: dateValue });
+      }
+
+      weights.sort((a, b) => new Date(a.date) - new Date(b.date));
+      localStorage.setItem("weights", JSON.stringify(weights));
+      weightInput.value = "";
+      dateInput.value = "";
+      currentPage = Math.ceil(weights.length / rowsPerPage);
+      renderTable();
+      renderWeeklyAverage();
+      renderChart();
+    }
+
+    function deleteWeight(index) {
+      weights.splice(index, 1);
+      localStorage.setItem("weights", JSON.stringify(weights));
+      if (currentPage > Math.ceil(weights.length / rowsPerPage)) {
+        currentPage = Math.max(1, currentPage - 1);
+      }
+      renderTable();
+      renderWeeklyAverage();
+      renderChart();
+    }
+
+    function editWeight(index) {
+      const entry = weights[index];
+      document.getElementById("dateInput").value = entry.date;
+      document.getElementById("weightInput").value = entry.weight;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function clearAllData() {
+      if (confirm("Are you sure you want to clear all data?")) {
+        weights = [];
+        localStorage.removeItem("weights");
+        currentPage = 1;
+        renderTable();
+        renderWeeklyAverage();
+        renderChart();
+      }
+    }
+
+    function exportCSV() {
+      if (weights.length === 0) return alert("No data to export.");
+      const csvRows = ["Day,Weight,Date"];
+      weights.forEach((entry, idx) => {
+        csvRows.push(`${idx + 1},${entry.weight},${entry.date}`);
+      });
+      const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "weights.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function renderTable() {
+      const tbody = document.querySelector("#weightTable tbody");
+      tbody.innerHTML = "";
+      const start = (currentPage - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      const pageWeights = weights.slice(start, end);
+
+      pageWeights.forEach((entry, idx) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${start + idx + 1}</td>
+          <td>${entry.weight}</td>
+          <td>${formatDate(entry.date)}</td>
+          <td>
+            <button onclick="editWeight(${start + idx})">Edit</button>
+            <button onclick="deleteWeight(${start + idx})">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.getElementById("pageInfo").textContent = `Page ${currentPage} of ${Math.max(1, Math.ceil(weights.length / rowsPerPage))}`;
+    }
+
+    function renderWeeklyAverage() {
+      const weeklyTable = document.querySelector("#weeklyAvgTable tbody");
+      weeklyTable.innerHTML = "";
+
+      const weeklyData = [];
+      let currentWeek = [];
+      weights.forEach(entry => {
+        if (entry.weight !== "N/A") {
+          currentWeek.push(Number(entry.weight));
+        }
+        if (currentWeek.length === 7) {
+          weeklyData.push(currentWeek);
+          currentWeek = [];
+        }
+      });
+      if (currentWeek.length > 0) weeklyData.push(currentWeek);
+
+      weeklyData.forEach((weekWeights, i) => {
+        const avg = (weekWeights.reduce((a, b) => a + b, 0) / weekWeights.length).toFixed(2);
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>Week ${i + 1}</td><td>${avg}</td>`;
+        weeklyTable.appendChild(row);
+      });
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById("weeklyChart").getContext("2d");
+
+      // Calculate weekly averages again for chart
+      const weeklyData = [];
+      let currentWeek = [];
+      weights.forEach(entry => {
+        if (entry.weight !== "N/A") {
+          currentWeek.push(Number(entry.weight));
+        }
+        if (currentWeek.length === 7) {
+          weeklyData.push(currentWeek);
+          currentWeek = [];
+        }
+      });
+      if (currentWeek.length > 0) weeklyData.push(currentWeek);
+
+      const labels = weeklyData.map((_, i) => `Week ${i + 1}`);
+      const data = weeklyData.map(weekWeights => (weekWeights.reduce((a, b) => a + b, 0) / weekWeights.length).toFixed(2));
+
+      if (chart) {
+        chart.destroy();
+      }
+
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Weekly Avg Weight',
+            data,
+            borderColor: 'crimson',
+            backgroundColor: 'rgba(255, 0, 0, 0.15)',  // Red fill under line
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5,
+            pointBackgroundColor: 'crimson',
+            pointBorderColor: 'white',
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: false,
+              ticks: {
+                stepSize: 5
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: {
+                font: {
+                  size: 14
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+      }
+    }
+
+    function nextPage() {
+      if (currentPage < Math.ceil(weights.length / rowsPerPage)) {
+        currentPage++;
+        renderTable();
+      }
+    }
+
+    // Initial render
+    renderTable();
+    renderWeeklyAverage();
+    renderChart();
+  </script>
+</body>
+</html>
